@@ -1,0 +1,14 @@
+--- a/net/minecraft/client/renderer/ImageBufferDownload.java
++++ b/net/minecraft/client/renderer/ImageBufferDownload.java
+@@ -32,10 +32,9 @@
+       if (flag) {
+          func_195788_a(p_195786_1_, 32, 0, 64, 32);
+       }
+-
+       func_195787_b(p_195786_1_, 0, 16, 64, 32);
+       func_195787_b(p_195786_1_, 16, 48, 48, 64);
+-      return p_195786_1_;
++      return net.minecraftforge.client.ForgeHooksClient.processPlayerTexture(p_195786_1_, flag); // Forge: Allow skin textures to be modified
+    }
+ 
+    public void func_152634_a() {

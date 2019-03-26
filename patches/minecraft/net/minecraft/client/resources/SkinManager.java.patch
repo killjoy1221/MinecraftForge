@@ -1,0 +1,53 @@
+--- a/net/minecraft/client/resources/SkinManager.java
++++ b/net/minecraft/client/resources/SkinManager.java
+@@ -43,7 +43,15 @@
+       this.field_152798_f = CacheBuilder.newBuilder().expireAfterAccess(15L, TimeUnit.SECONDS).build(new CacheLoader<GameProfile, Map<Type, MinecraftProfileTexture>>() {
+          public Map<Type, MinecraftProfileTexture> load(GameProfile p_load_1_) throws Exception {
+             try {
+-               return Minecraft.func_71410_x().func_152347_ac().getTextures(p_load_1_, false);
++               // Forge: player textures
++               Map<Type, MinecraftProfileTexture> map = Maps.newHashMap();
++               if (net.minecraftforge.client.ForgeHooksClient.onPreLoadPlayerTexture(p_load_1_, map)) {
++                  map = Minecraft.func_71410_x().func_152347_ac().getTextures(p_load_1_, false);
++               }
++               if (net.minecraftforge.client.ForgeHooksClient.onPostLoadPlayerTexture(p_load_1_, map)) {
++                  map = Maps.newHashMap();
++               }
++               return map;
+             } catch (Throwable var3) {
+                return Maps.newHashMap();
+             }
+@@ -56,6 +64,8 @@
+    }
+ 
+    public ResourceLocation func_152789_a(final MinecraftProfileTexture p_152789_1_, final Type p_152789_2_, @Nullable final SkinManager.SkinAvailableCallback p_152789_3_) {
++      ResourceLocation res = net.minecraftforge.client.ForgeHooksClient.onDownloadPlayerTexture(p_152789_1_, p_152789_2_);
++      if (res != null) return res; // Forge: player textures
+       String s = Hashing.sha1().hashUnencodedChars(p_152789_1_.getHash()).toString();
+       final ResourceLocation resourcelocation = new ResourceLocation("skins/" + s);
+       ITextureObject itextureobject = this.field_152795_c.func_110581_b(resourcelocation);
+@@ -92,13 +102,15 @@
+    public void func_152790_a(GameProfile p_152790_1_, SkinManager.SkinAvailableCallback p_152790_2_, boolean p_152790_3_) {
+       field_152794_b.submit(() -> {
+          Map<Type, MinecraftProfileTexture> map = Maps.newHashMap();
+-
++         if (net.minecraftforge.client.ForgeHooksClient.onPreLoadPlayerTexture(p_152790_1_, map)) return; // Forge: player textures
++         if (map.isEmpty())
+          try {
+             map.putAll(this.field_152797_e.getTextures(p_152790_1_, p_152790_3_));
+          } catch (InsecureTextureException var7) {
+             ;
+          }
+ 
++
+          if (map.isEmpty()) {
+             p_152790_1_.getProperties().clear();
+             if (p_152790_1_.getId().equals(Minecraft.func_71410_x().func_110432_I().func_148256_e().getId())) {
+@@ -114,6 +126,7 @@
+                }
+             }
+          }
++         if (net.minecraftforge.client.ForgeHooksClient.onPostLoadPlayerTexture(p_152790_1_, map)) return; // Forge: player textures
+ 
+          Minecraft.func_71410_x().func_152344_a(() -> {
+             if (map.containsKey(Type.SKIN)) {

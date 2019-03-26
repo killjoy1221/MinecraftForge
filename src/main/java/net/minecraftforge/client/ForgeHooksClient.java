@@ -33,13 +33,16 @@ import java.util.Optional;
 import java.util.Random;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;
 
-import net.minecraft.client.MouseHelper;
-import net.minecraftforge.client.event.RecipesUpdatedEvent;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.minecraft.MinecraftProfileTexture;
+import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,6 +52,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.MouseHelper;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.audio.SoundManager;
 import net.minecraft.client.gui.BossInfoClient;
@@ -106,6 +110,10 @@ import net.minecraftforge.client.event.FOVUpdateEvent;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.client.event.InputUpdateEvent;
 import net.minecraftforge.client.event.ModelBakeEvent;
+import net.minecraftforge.client.event.PlayerTextureDownloadEvent;
+import net.minecraftforge.client.event.PlayerTextureLoadEvent;
+import net.minecraftforge.client.event.PlayerTextureProcessEvent;
+import net.minecraftforge.client.event.RecipesUpdatedEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.RenderSpecificHandEvent;
@@ -139,6 +147,31 @@ public class ForgeHooksClient
     {
         String result = armor.getItem().getArmorTexture(armor, entity, slot, type);
         return result != null ? result : _default;
+    }
+
+    public static NativeImage processPlayerTexture(NativeImage image, boolean is32)
+    {
+        PlayerTextureProcessEvent event = new PlayerTextureProcessEvent(image, is32);
+        MinecraftForge.EVENT_BUS.post(event);
+        return event.getImage();
+    }
+
+    public static boolean onPreLoadPlayerTexture(GameProfile profile, Map<Type, MinecraftProfileTexture> profileMap)
+    {
+        return MinecraftForge.EVENT_BUS.post(new PlayerTextureLoadEvent.Pre(profile, profileMap));
+    }
+
+    public static boolean onPostLoadPlayerTexture(GameProfile profile, Map<Type, MinecraftProfileTexture> profileMap)
+    {
+        return MinecraftForge.EVENT_BUS.post(new PlayerTextureLoadEvent.Post(profile, profileMap));
+    }
+
+    @Nullable
+    public static ResourceLocation onDownloadPlayerTexture(MinecraftProfileTexture profileTexture, Type textureType)
+    {
+        PlayerTextureDownloadEvent event = new PlayerTextureDownloadEvent(profileTexture, textureType);
+        MinecraftForge.EVENT_BUS.post(event);
+        return event.getLocation();
     }
 
     public static boolean onDrawBlockHighlight(WorldRenderer context, EntityPlayer player, RayTraceResult target, int subID, float partialTicks)
