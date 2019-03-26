@@ -27,10 +27,16 @@ import net.minecraftforge.eventbus.api.Event;
 
 import java.util.Map;
 
+/**
+ * An event for changing the {@link MinecraftProfileTexture} associated with a
+ * {@link GameProfile}.
+ *
+ * This is fired async for players and sync for skulls and the player menu, so
+ * it is best to stay away from the main thread.
+ */
 @Cancelable
 public abstract class PlayerTextureLoadEvent extends Event
 {
-
     private final GameProfile profile;
     private final Map<Type, MinecraftProfileTexture> profileMap;
 
@@ -52,7 +58,6 @@ public abstract class PlayerTextureLoadEvent extends Event
 
     public static class Pre extends PlayerTextureLoadEvent
     {
-
         public Pre(GameProfile profile,Map<Type, MinecraftProfileTexture> profileMap)
         {
             super(profile, profileMap);
@@ -61,7 +66,6 @@ public abstract class PlayerTextureLoadEvent extends Event
 
     public static class Post extends PlayerTextureLoadEvent
     {
-
         public Post(GameProfile profile,Map<Type, MinecraftProfileTexture> profileMap)
         {
             super(profile, profileMap);

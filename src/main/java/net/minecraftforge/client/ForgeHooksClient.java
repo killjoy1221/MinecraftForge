@@ -43,6 +43,9 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
 
+import net.minecraft.client.renderer.texture.ITextureObject;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.resources.SkinManager;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -167,11 +170,28 @@ public class ForgeHooksClient
     }
 
     @Nullable
-    public static ResourceLocation onDownloadPlayerTexture(MinecraftProfileTexture profileTexture, Type textureType)
+    public static ResourceLocation onDownloadPlayerTexture(MinecraftProfileTexture profileTexture, Type textureType, @Nullable SkinManager.SkinAvailableCallback callback)
     {
-        PlayerTextureDownloadEvent event = new PlayerTextureDownloadEvent(profileTexture, textureType);
+        PlayerTextureDownloadEvent event = new PlayerTextureDownloadEvent(profileTexture, textureType, callback);
         MinecraftForge.EVENT_BUS.post(event);
-        return event.getLocation();
+        ResourceLocation res = event.getLocation();
+        if (res != null)
+        {
+            TextureManager textureManager = Minecraft.getInstance().textureManager;
+            ITextureObject obj = textureManager.getTexture(res);
+            if (obj != null)
+            {
+                if (callback != null)
+                {
+                    callback.onSkinTextureAvailable(textureType, res, profileTexture);
+                }
+            }
+            else
+            {
+                textureManager.loadTexture(res, event.getTextureSupplier().get());
+            }
+        }
+        return res;
     }
 
     public static boolean onDrawBlockHighlight(WorldRenderer context, EntityPlayer player, RayTraceResult target, int subID, float partialTicks)
